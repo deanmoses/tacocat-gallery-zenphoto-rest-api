@@ -4,8 +4,13 @@
 # Compiled binary addons (http://nodejs.org/api/addons.html)
 build/Release
 
-node_modules
-dist
+# Installed Node.js modules
+node_modules/
+
+# Target build directory for processed, compiled web app
+dist/
+
+# Temporary stuff
 test/temp
 .tmp
 
