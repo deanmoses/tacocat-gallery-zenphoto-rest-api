@@ -1,0 +1,88 @@
+<?php
+
+/**
+ * Adds a JSON REST API to ZenPhoto to support building mobile apps,
+ * javascript-heavy web apps, and other types of integrations.
+ *
+ * This filter will detect an api=json parameter in the query string
+ * and return a JSON representation of the album or photo instead of 
+ * the normal HTML response.
+ *
+ *
+ * The URL format is:<br>
+ * <var>mod_rewrite</var><br>
+ * 			/ <i>languageid</i> / <i>standard url</i><br>
+ * <var>else</var><br>
+ * 			<i>standard url</i>?locale=<i>languageid</i><br>
+ * Where <i>languageid</i> is the local identifier (e.g. en, en_US, fr_FR, etc.)
+ *
+ *
+ * @author Dean Moses (deanmoses)
+ * @package plugins
+ * @subpackage api
+ */
+$plugin_is_filter = 900 | FEATURE_PLUGIN;
+$plugin_description = gettext('Allows retrieving albums via a REST API');
+$plugin_author = "Dean Moses (deanmoses)";
+
+// Handle API calls before anything else
+if (!OFFSET_PATH && isset($_GET['api'])) {
+	zp_register_filter('load_theme_script', 'executeRestApi', 9999);
+}
+
+function executeRestApi() {
+	global $_zp_current_album, $_zp_current_image, $_zp_current_admin_obj, $_zp_current_category;
+	header('Content-type: application/json; charset=UTF-8');
+	$_zp_gallery_page = 'rest_api.php';
+	$album = array();
+	$album['id'] = $_zp_current_album->getID();
+	$album['url'] = getAlbumURL();
+	$album['title'] = $_zp_current_album->getTitle();
+	$album['description'] = $_zp_current_album->getDesc();
+	$album['published'] = $_zp_current_album->getShow();
+	$album['date'] = $_zp_current_album->getDateTime();
+	$album['datePublished'] = $_zp_current_album->getPublishDate();
+	$album['thumb'] = toThumbApi($_zp_current_album->getAlbumThumbImage());
+	$albums = array();
+	while (next_album()):
+		$albums[] = toChildAlbumApi($_zp_current_album);
+	endwhile;
+	$album['albums'] = $albums;
+	$images = array();
+	while (next_image()):
+		$images[] = toImageApi($_zp_current_image);
+	endwhile;
+	$album['images'] = $images;
+	print(json_encode($album));
+	exitZP();
+}
+
+function toImageApi($image) {
+	$ret = array();
+	$ret['id'] = $image->getID();
+	$ret['url'] = getImageURL(); // relies on $_zp_current_image being set correctly
+	$ret['title'] = $image->getTitle();
+	$ret['description'] = $image->getDesc();
+	$ret['date'] = $image->getDateTime();
+	return $ret;
+}
+
+function toChildAlbumApi($album) {
+	$ret = array();
+	$ret['id'] = $album->getID();
+	$ret['url'] = getAlbumURL(); // relies on $_zp_current_album being set correctly
+	$ret['title'] = $album->getTitle();
+	$ret['description'] = $album->getDesc();
+	$ret['published'] = $album->getShow();
+	$ret['date'] = $album->getDateTime();
+	$ret['datePublished'] = $album->getPublishDate();	
+	return $ret;
+}
+
+function toThumbApi($image) {
+	$thumb = array();
+	$thumb['url'] = $image->getThumb();
+	return $thumb;
+}
+
+?>
