@@ -43,8 +43,12 @@ function executeRestApi() {
 	$album['path'] = $_zp_current_album->name;
 	$album['title'] = $_zp_current_album->getTitle();
 	$album['description'] = $_zp_current_album->getDesc();
-	$album['published'] = $_zp_current_album->getShow();
-	$album['date'] = $_zp_current_album->getDateTime();
+	$album['published'] = (boolean) $_zp_current_album->getShow();
+
+	//format:  2014-11-24 01:40:22
+	$a = strptime($_zp_current_album->getDateTime(), '%Y-%m-%d %H:%M:%S');
+	$album['date'] = mktime($a['tm_hour'], $a['tm_min'], $a['tm_sec'], $a['tm_mon']+1, $a['tm_mday'], $a['tm_year']+1900);
+	
 	$album['thumb'] = toThumbApi($_zp_current_album->getAlbumThumbImage());
 	$albums = array();
 	while (next_album()):
@@ -68,7 +72,8 @@ function toImageApi($image) {
 	$ret['url'] = getImageURL(); // relies on $_zp_current_image being set correctly
 	$ret['title'] = $image->getTitle();
 	$ret['description'] = $image->getDesc();
-	$ret['date'] = $image->getDateTime();
+	$a = strptime($image->getDateTime(), '%Y-%m-%d %H:%M:%S');
+	$ret['date'] = mktime($a['tm_hour'], $a['tm_min'], $a['tm_sec'], $a['tm_mon']+1, $a['tm_mday'], $a['tm_year']+1900);
 	return $ret;
 }
 
@@ -78,9 +83,11 @@ function toChildAlbumApi($album) {
 	$ret['path'] = $album->name;
 	$ret['title'] = $album->getTitle();
 	$ret['description'] = $album->getDesc();
-	$ret['published'] = $album->getShow();
-	$ret['date'] = $album->getDateTime();
+	$ret['published'] = (boolean) $album->getShow();
 	$ret['thumb'] = toThumbApi($album->getAlbumThumbImage());
+	$a = strptime($album->getDateTime(), '%Y-%m-%d %H:%M:%S');
+	$ret['date'] = mktime($a['tm_hour'], $a['tm_min'], $a['tm_sec'], $a['tm_mon']+1, $a['tm_mday'], $a['tm_year']+1900);
+	
 	return $ret;
 }
 
