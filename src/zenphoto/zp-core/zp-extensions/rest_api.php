@@ -34,14 +34,17 @@ function executeRestApi() {
 	global $_zp_current_album, $_zp_current_image, $_zp_current_admin_obj, $_zp_current_category;
 	header('Content-type: application/json; charset=UTF-8');
 	$_zp_gallery_page = 'rest_api.php';
+	
+	// Album getAlbum( int $index  )
+	// makeAlbumCurrent(someAlbum)
+	
+	
 	$album = array();
-	$album['id'] = $_zp_current_album->getID();
-	$album['url'] = getAlbumURL();
+	$album['path'] = $_zp_current_album->name;
 	$album['title'] = $_zp_current_album->getTitle();
 	$album['description'] = $_zp_current_album->getDesc();
 	$album['published'] = $_zp_current_album->getShow();
 	$album['date'] = $_zp_current_album->getDateTime();
-	$album['datePublished'] = $_zp_current_album->getPublishDate();
 	$album['thumb'] = toThumbApi($_zp_current_album->getAlbumThumbImage());
 	$albums = array();
 	while (next_album()):
@@ -57,9 +60,11 @@ function executeRestApi() {
 	exitZP();
 }
 
+// get just enough info about an image to render it on a standalone page
 function toImageApi($image) {
 	$ret = array();
-	$ret['id'] = $image->getID();
+	// strip /zenphoto/albums/ so that the path starts something like 2014/...
+	$ret['path'] = str_replace('/zenphoto/albums/', '', $image->getFullImage());
 	$ret['url'] = getImageURL(); // relies on $_zp_current_image being set correctly
 	$ret['title'] = $image->getTitle();
 	$ret['description'] = $image->getDesc();
@@ -67,21 +72,24 @@ function toImageApi($image) {
 	return $ret;
 }
 
+// get just enough info about a child album to render it as thumbnails
 function toChildAlbumApi($album) {
 	$ret = array();
-	$ret['id'] = $album->getID();
-	$ret['url'] = getAlbumURL(); // relies on $_zp_current_album being set correctly
+	$ret['path'] = $album->name;
 	$ret['title'] = $album->getTitle();
 	$ret['description'] = $album->getDesc();
 	$ret['published'] = $album->getShow();
 	$ret['date'] = $album->getDateTime();
-	$ret['datePublished'] = $album->getPublishDate();	
+	$ret['thumb'] = toThumbApi($album->getAlbumThumbImage());
 	return $ret;
 }
 
+// get just enough info about the thumbnail version of an image to render it
 function toThumbApi($image) {
 	$thumb = array();
 	$thumb['url'] = $image->getThumb();
+	// would like to get width and height, but that seems to be a property
+	// of the theme, and not easy to get...
 	return $thumb;
 }
 
