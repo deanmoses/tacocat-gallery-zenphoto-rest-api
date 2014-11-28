@@ -31,38 +31,63 @@ if (!OFFSET_PATH && isset($_GET['api'])) {
 }
 
 function executeRestApi() {
-	global $_zp_current_album, $_zp_current_image, $_zp_current_admin_obj, $_zp_current_category;
+	global $_zp_gallery, $_zp_current_album, $_zp_current_image, $_zp_albums;
 	header('Content-type: application/json; charset=UTF-8');
 	$_zp_gallery_page = 'rest_api.php';
-
+		
 	$album = array();
-	$album['path'] = $_zp_current_album->name;
-	$album['title'] = $_zp_current_album->getTitle();
-	$album['description'] = $_zp_current_album->getDesc();
-	$album['published'] = (boolean) $_zp_current_album->getShow();
-	$album['image_size'] = getOption('image_size');
-	$album['thumb_size'] = getOption('thumb_size');
 	
-	//format:  2014-11-24 01:40:22
-	$a = strptime($_zp_current_album->getDateTime(), '%Y-%m-%d %H:%M:%S');
-	$album['date'] = mktime($a['tm_hour'], $a['tm_min'], $a['tm_sec'], $a['tm_mon']+1, $a['tm_mday'], $a['tm_year']+1900);
+	// If no current album, we're at the root of the site
+	if (!$_zp_current_album) {
+		$album['image_size'] = getOption('image_size');
+		$album['thumb_size'] = getOption('thumb_size');
+
+		// Get the top-level albums
+	   	$subAlbumNames = $_zp_gallery->getAlbums();
+		if (is_array($subAlbumNames)) {
+			$subAlbums = array();
+			foreach ($subAlbumNames as $subAlbumName) {
+				$subAlbum = new Album($subAlbumName, $_zp_gallery);
+				$subAlbums[] = toChildAlbumApi($subAlbum);
+			}
+			if ($subAlbums) {
+				$album['albums'] = $subAlbums;
+			}
+		}
+	}
+	// Else we're in the context of an album
+	else {
+		$album['path'] = $_zp_current_album->name;
+		$album['title'] = $_zp_current_album->getTitle();
+		$album['description'] = $_zp_current_album->getDesc();
+		$album['published'] = (boolean) $_zp_current_album->getShow();
+		$album['image_size'] = getOption('image_size');
+		$album['thumb_size'] = getOption('thumb_size');
 	
-	$albums = array();
-	while (next_album()):
-		$albums[] = toChildAlbumApi($_zp_current_album);
-	endwhile;
-	if ($albums) {
-		$album['albums'] = $albums;
+		//format:  2014-11-24 01:40:22
+		$a = strptime($_zp_current_album->getDateTime(), '%Y-%m-%d %H:%M:%S');
+		$album['date'] = mktime($a['tm_hour'], $a['tm_min'], $a['tm_sec'], $a['tm_mon']+1, $a['tm_mday'], $a['tm_year']+1900);
+	
+		// Get this albums' subalbums
+		$albums = array();
+		while (next_album()):
+			$albums[] = toChildAlbumApi($_zp_current_album);
+		endwhile;
+		if ($albums) {
+			$album['albums'] = $albums;
+		}
+	
+		// Get this albums' images
+		$images = array();
+		while (next_image()):
+			$images[] = toImageApi($_zp_current_image);
+		endwhile;
+		if ($images) {
+			$album['images'] = $images;
+		}
 	}
 	
-	$images = array();
-	while (next_image()):
-		$images[] = toImageApi($_zp_current_image);
-	endwhile;
-	if ($images) {
-		$album['images'] = $images;
-	}
-	
+	// Return the album to the client in JSON format
 	print(json_encode($album));
 	exitZP();
 }
