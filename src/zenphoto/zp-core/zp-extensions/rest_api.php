@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Adds a JSON REST API to ZenPhoto to support building mobile apps,
+ * A JSON REST API for ZenPhoto.  Supports building mobile apps,
  * javascript-heavy web apps, and other types of integrations.
  *
  * This filter will detect an api=json parameter in the query string
@@ -74,6 +74,7 @@ function toImageApi($image) {
 	$ret['description'] = $image->getDesc();
 	$a = strptime($image->getDateTime(), '%Y-%m-%d %H:%M:%S');
 	$ret['date'] = mktime($a['tm_hour'], $a['tm_min'], $a['tm_sec'], $a['tm_mon']+1, $a['tm_mday'], $a['tm_year']+1900);
+	$ret['thumb'] = toThumbApi($image);
 	return $ret;
 }
 
