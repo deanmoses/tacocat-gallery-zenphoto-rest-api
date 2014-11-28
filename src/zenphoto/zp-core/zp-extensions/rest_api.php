@@ -34,32 +34,35 @@ function executeRestApi() {
 	global $_zp_current_album, $_zp_current_image, $_zp_current_admin_obj, $_zp_current_category;
 	header('Content-type: application/json; charset=UTF-8');
 	$_zp_gallery_page = 'rest_api.php';
-	
-	// Album getAlbum( int $index  )
-	// makeAlbumCurrent(someAlbum)
-	
-	
+
 	$album = array();
 	$album['path'] = $_zp_current_album->name;
 	$album['title'] = $_zp_current_album->getTitle();
 	$album['description'] = $_zp_current_album->getDesc();
 	$album['published'] = (boolean) $_zp_current_album->getShow();
-
+	$album['image_size'] = getOption('image_size');
+	$album['thumb_size'] = getOption('thumb_size');
+	
 	//format:  2014-11-24 01:40:22
 	$a = strptime($_zp_current_album->getDateTime(), '%Y-%m-%d %H:%M:%S');
 	$album['date'] = mktime($a['tm_hour'], $a['tm_min'], $a['tm_sec'], $a['tm_mon']+1, $a['tm_mday'], $a['tm_year']+1900);
 	
-	$album['thumb'] = toThumbApi($_zp_current_album->getAlbumThumbImage());
 	$albums = array();
 	while (next_album()):
 		$albums[] = toChildAlbumApi($_zp_current_album);
 	endwhile;
-	$album['albums'] = $albums;
+	if ($albums) {
+		$album['albums'] = $albums;
+	}
+	
 	$images = array();
 	while (next_image()):
 		$images[] = toImageApi($_zp_current_image);
 	endwhile;
-	$album['images'] = $images;
+	if ($images) {
+		$album['images'] = $images;
+	}
+	
 	print(json_encode($album));
 	exitZP();
 }
@@ -69,12 +72,13 @@ function toImageApi($image) {
 	$ret = array();
 	// strip /zenphoto/albums/ so that the path starts something like 2014/...
 	$ret['path'] = str_replace('/zenphoto/albums/', '', $image->getFullImage());
-	$ret['url'] = getImageURL(); // relies on $_zp_current_image being set correctly
+	$ret['urlFull'] = $image->getFullImageURL();
+	$ret['urlSized'] = $image->getSizedImage(getOption('image_size'));
+	$ret['urlThumb'] = $image->getThumb();
 	$ret['title'] = $image->getTitle();
 	$ret['description'] = $image->getDesc();
 	$a = strptime($image->getDateTime(), '%Y-%m-%d %H:%M:%S');
 	$ret['date'] = mktime($a['tm_hour'], $a['tm_min'], $a['tm_sec'], $a['tm_mon']+1, $a['tm_mday'], $a['tm_year']+1900);
-	$ret['thumb'] = toThumbApi($image);
 	return $ret;
 }
 
@@ -85,20 +89,14 @@ function toChildAlbumApi($album) {
 	$ret['title'] = $album->getTitle();
 	$ret['description'] = $album->getDesc();
 	$ret['published'] = (boolean) $album->getShow();
-	$ret['thumb'] = toThumbApi($album->getAlbumThumbImage());
+	$thumbImage = $album->getAlbumThumbImage();
+	if ($thumbImage) {
+		$ret['urlThumb'] = $album->getAlbumThumbImage()->getThumb();
+	}
 	$a = strptime($album->getDateTime(), '%Y-%m-%d %H:%M:%S');
 	$ret['date'] = mktime($a['tm_hour'], $a['tm_min'], $a['tm_sec'], $a['tm_mon']+1, $a['tm_mday'], $a['tm_year']+1900);
 	
 	return $ret;
-}
-
-// get just enough info about the thumbnail version of an image to render it
-function toThumbApi($image) {
-	$thumb = array();
-	$thumb['url'] = $image->getThumb();
-	// would like to get width and height, but that seems to be a property
-	// of the theme, and not easy to get...
-	return $thumb;
 }
 
 ?>
