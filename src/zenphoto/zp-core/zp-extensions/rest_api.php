@@ -68,7 +68,7 @@ function executeRestApi() {
 		$a = strptime($_zp_current_album->getDateTime(), '%Y-%m-%d %H:%M:%S');
 		$album['date'] = mktime($a['tm_hour'], $a['tm_min'], $a['tm_sec'], $a['tm_mon']+1, $a['tm_mday'], $a['tm_year']+1900);
 	
-		// Get this albums' subalbums
+		// Add info about this albums' subalbums
 		$albums = array();
 		while (next_album()):
 			$albums[] = toChildAlbumApi($_zp_current_album);
@@ -77,7 +77,7 @@ function executeRestApi() {
 			$album['albums'] = $albums;
 		}
 	
-		// Get this albums' images
+		// Add info about this albums' images
 		$images = array();
 		while (next_image()):
 			$images[] = toImageApi($_zp_current_image);
@@ -85,11 +85,40 @@ function executeRestApi() {
 		if ($images) {
 			$album['images'] = $images;
 		}
+		
+		// Add info about parent album
+		$parentAlbum = toRelatedAlbum($_zp_current_album->getParent());
+		if ($parentAlbum) {
+			$album['parent'] = $parentAlbum;
+		}
+		
+		// Add info about next album
+		$nextAlbum = toRelatedAlbum($_zp_current_album->getNextAlbum());
+		if ($nextAlbum) {
+			$album['next'] = $nextAlbum;
+		}
+		
+		// Add info about prev album
+		$prevAlbum = toRelatedAlbum($_zp_current_album->getPrevAlbum());
+		if ($prevAlbum) {
+			$album['prev'] = $prevAlbum;
+		}
 	}
 	
 	// Return the album to the client in JSON format
 	print(json_encode($album));
 	exitZP();
+}
+
+// get just enough info about a parent / prev / next album
+function toRelatedAlbum($album) {
+	if ($album) {
+		$ret = array();
+		$ret['path'] = $album->name;
+		$ret['title'] = $album->getTitle();
+		return $ret;
+	}
+	return;
 }
 
 // get just enough info about an image to render it on a standalone page
