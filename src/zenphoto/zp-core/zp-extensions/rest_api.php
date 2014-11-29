@@ -33,10 +33,11 @@ if (!OFFSET_PATH && isset($_GET['api'])) {
 function executeRestApi() {
 	global $_zp_gallery, $_zp_current_album, $_zp_current_image, $_zp_albums;
 	header('Content-type: application/json; charset=UTF-8');
+	header('Access-Control-Allow-Origin: *');  // allow anybody on any server to retrieve this
 	$_zp_gallery_page = 'rest_api.php';
 		
 	$album = array();
-	
+		
 	// If no current album, we're at the root of the site
 	if (!$_zp_current_album) {
 		$album['image_size'] = getOption('image_size');
@@ -89,7 +90,7 @@ function executeRestApi() {
 		// Add info about parent album
 		$parentAlbum = toRelatedAlbum($_zp_current_album->getParent());
 		if ($parentAlbum) {
-			$album['parent'] = $parentAlbum;
+			$album['parent_album'] = $parentAlbum; // would like to use 'parent' but that's a reserved word in javascript
 		}
 		
 		// Add info about next album
