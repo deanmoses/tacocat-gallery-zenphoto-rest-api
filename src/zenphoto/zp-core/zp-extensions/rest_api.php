@@ -117,6 +117,10 @@ function toRelatedAlbum($album) {
 		$ret = array();
 		$ret['path'] = $album->name;
 		$ret['title'] = $album->getTitle();
+		
+		//format:  2014-11-24 01:40:22
+		$a = strptime($album->getDateTime(), '%Y-%m-%d %H:%M:%S');
+		$ret['date'] = mktime($a['tm_hour'], $a['tm_min'], $a['tm_sec'], $a['tm_mon']+1, $a['tm_mday'], $a['tm_year']+1900);
 		return $ret;
 	}
 	return;
@@ -132,6 +136,8 @@ function toImageApi($image) {
 	$ret['urlThumb'] = $image->getThumb();
 	$ret['title'] = $image->getTitle();
 	$ret['description'] = $image->getDesc();
+	$ret['width'] = $image->getWidth();
+	$ret['height'] = $image->getHeight();
 	$a = strptime($image->getDateTime(), '%Y-%m-%d %H:%M:%S');
 	$ret['date'] = mktime($a['tm_hour'], $a['tm_min'], $a['tm_sec'], $a['tm_mon']+1, $a['tm_mday'], $a['tm_year']+1900);
 	return $ret;
