@@ -60,8 +60,8 @@ function executeRestApi() {
 	else {
 		$album['path'] = $_zp_current_album->name;
 		$album['title'] = $_zp_current_album->getTitle();
-		$album['description'] = $_zp_current_album->getDesc();
-		$album['published'] = (boolean) $_zp_current_album->getShow();
+		if ($_zp_current_album->getDesc()) $album['description'] = $_zp_current_album->getDesc();
+		if (!(boolean) $_zp_current_album->getShow()) $album['unpublished'] = true;
 		$album['image_size'] = getOption('image_size');
 		$album['thumb_size'] = getOption('thumb_size');
 	
@@ -111,53 +111,55 @@ function executeRestApi() {
 	exitZP();
 }
 
-// get just enough info about a parent / prev / next album
+// just enough info about a parent / prev / next album to navigate to it
 function toRelatedAlbum($album) {
 	if ($album) {
 		$ret = array();
 		$ret['path'] = $album->name;
 		$ret['title'] = $album->getTitle();
-		
-		//format:  2014-11-24 01:40:22
-		$a = strptime($album->getDateTime(), '%Y-%m-%d %H:%M:%S');
-		$ret['date'] = mktime($a['tm_hour'], $a['tm_min'], $a['tm_sec'], $a['tm_mon']+1, $a['tm_mday'], $a['tm_year']+1900);
+		$ret['date'] = toTimestamp($album->getDateTime());
 		return $ret;
 	}
 	return;
 }
 
-// get just enough info about an image to render it on a standalone page
+// just enough info about an image to render it on a standalone page
 function toImageApi($image) {
 	$ret = array();
 	// strip /zenphoto/albums/ so that the path starts something like 2014/...
 	$ret['path'] = str_replace('/zenphoto/albums/', '', $image->getFullImage());
+	$ret['title'] = $image->getTitle();
+	$ret['date'] = toTimestamp($image->getDateTime());
+	$ret['description'] = $image->getDesc();
 	$ret['urlFull'] = $image->getFullImageURL();
 	$ret['urlSized'] = $image->getSizedImage(getOption('image_size'));
 	$ret['urlThumb'] = $image->getThumb();
-	$ret['title'] = $image->getTitle();
-	$ret['description'] = $image->getDesc();
 	$ret['width'] = $image->getWidth();
 	$ret['height'] = $image->getHeight();
-	$a = strptime($image->getDateTime(), '%Y-%m-%d %H:%M:%S');
-	$ret['date'] = mktime($a['tm_hour'], $a['tm_min'], $a['tm_sec'], $a['tm_mon']+1, $a['tm_mday'], $a['tm_year']+1900);
+	
 	return $ret;
 }
 
-// get just enough info about a child album to render it as thumbnails
+// just enough info about a child album to render its thumbnail
 function toChildAlbumApi($album) {
 	$ret = array();
 	$ret['path'] = $album->name;
 	$ret['title'] = $album->getTitle();
-	$ret['description'] = $album->getDesc();
-	$ret['published'] = (boolean) $album->getShow();
+	$ret['date'] = toTimestamp($album->getDateTime());
+	if ($album->getCustomData()) $ret['summary'] = $album->getCustomData();
+	if (!(boolean) $album->getShow()) $ret['unpublished'] = true;
 	$thumbImage = $album->getAlbumThumbImage();
 	if ($thumbImage) {
 		$ret['urlThumb'] = $album->getAlbumThumbImage()->getThumb();
 	}
-	$a = strptime($album->getDateTime(), '%Y-%m-%d %H:%M:%S');
-	$ret['date'] = mktime($a['tm_hour'], $a['tm_min'], $a['tm_sec'], $a['tm_mon']+1, $a['tm_mday'], $a['tm_year']+1900);
 	
 	return $ret;
+}
+
+// take a zenphoto date string and turn it into an integer timestamp
+function toTimestamp($dateString) {
+	$a = strptime($dateString, '%Y-%m-%d %H:%M:%S'); //format:  2014-11-24 01:40:22
+	return mktime($a['tm_hour'], $a['tm_min'], $a['tm_sec'], $a['tm_mon']+1, $a['tm_mday'], $a['tm_year']+1900);
 }
 
 ?>
