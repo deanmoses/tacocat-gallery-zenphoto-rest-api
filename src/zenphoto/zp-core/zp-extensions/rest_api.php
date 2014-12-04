@@ -55,6 +55,16 @@ function executeRestApi() {
 				$album['albums'] = $subAlbums;
 			}
 		}
+		
+		include 'image_album_statistics.php';
+		$latestAlbumNames = getAlbumStatistic(1, 'latest-date');
+		if (count($latestAlbumNames) > 0) {
+			$latestAlbum = new Album($latestAlbumNames[0]['folder'], $_zp_gallery);
+			$latest[] = toChildAlbumApi($latestAlbum);
+			if ($latest) {
+				$album['latest'] = $latest;
+			}
+		}
 	}
 	// Else we're in the context of an album
 	else {
