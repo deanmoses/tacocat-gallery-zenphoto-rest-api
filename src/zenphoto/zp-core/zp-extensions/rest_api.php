@@ -4,18 +4,9 @@
  * A JSON REST API for ZenPhoto.  Supports building mobile apps,
  * javascript-heavy web apps, and other types of integrations.
  *
- * This filter will detect an api=json parameter in the query string
- * and return a JSON representation of the album or photo instead of 
- * the normal HTML response.
- *
- *
- * The URL format is:<br>
- * <var>mod_rewrite</var><br>
- * 			/ <i>languageid</i> / <i>standard url</i><br>
- * <var>else</var><br>
- * 			<i>standard url</i>?locale=<i>languageid</i><br>
- * Where <i>languageid</i> is the local identifier (e.g. en, en_US, fr_FR, etc.)
- *
+ * This filter will detect a query string parameter (?api) and
+ * return a JSON representation of the album or search results
+ * instead of the normal HTML response.
  *
  * @author Dean Moses (deanmoses)
  * @package plugins
