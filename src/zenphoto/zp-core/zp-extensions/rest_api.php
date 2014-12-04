@@ -60,7 +60,7 @@ function executeRestApi() {
 		$latestAlbumNames = getAlbumStatistic(1, 'latest-date');
 		if (count($latestAlbumNames) > 0) {
 			$latestAlbum = new Album($latestAlbumNames[0]['folder'], $_zp_gallery);
-			$latest[] = toChildAlbumApi($latestAlbum);
+			$latest = toChildAlbumApi($latestAlbum);
 			if ($latest) {
 				$album['latest'] = $latest;
 			}
