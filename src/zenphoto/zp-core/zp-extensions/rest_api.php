@@ -22,17 +22,17 @@ if (!OFFSET_PATH && isset($_GET['api'])) {
 }
 
 function executeRestApi() {
-	global $_zp_gallery, $_zp_current_album, $_zp_current_image, $_zp_albums,$_zp_current_search;
+	global $_zp_gallery, $_zp_current_album, $_zp_current_image, $_zp_albums,$_zp_current_search,$_zp_current_context;
 	header('Content-type: application/json; charset=UTF-8');
 	header('Access-Control-Allow-Origin: *');  // allow anybody on any server to retrieve this
 	$_zp_gallery_page = 'rest_api.php';
 
-	// the data structure we will be returning in JSON format
-	$album = array();
+	// the data structure we will be returning via JSON
+	$ret = array();
 	
 	// If there's a search, return it instead of albums
 	if ($_zp_current_search) {
-		$album['thumb_size'] = getOption('thumb_size');
+		$ret['thumb_size'] = getOption('thumb_size');
 		
 		// add search results that are images
 		$imageResults = array();
@@ -43,7 +43,7 @@ function executeRestApi() {
 			$imageResults[] = toImage($imageObject);
 		}
 		if ($imageResults) {
-			$album['images'] = $imageResults;
+			$ret['images'] = $imageResults;
 		}
 		
 		// add search results that are albums
@@ -52,13 +52,67 @@ function executeRestApi() {
 			$albumResults[] = toAlbumThumb($_zp_current_album);
 		}
 		if ($albumResults) {
-			$album['albums'] = $albumResults;
+			$ret['albums'] = $albumResults;
 		}
 	}
-	// If no current album, we're at the root of the site
-	else if (!$_zp_current_album) {
-		$album['image_size'] = getOption('image_size');
-		$album['thumb_size'] = getOption('thumb_size');
+	// Else if the system in the context of an image, return info about the image
+	else if ($_zp_current_image) {
+		$ret['image'] = toImage($_zp_current_image);
+	}
+	// Else if the system is in the context of an album, return info about the album
+	else if ($_zp_current_album) {
+		$ret['path'] = $_zp_current_album->name;
+		$ret['title'] = $_zp_current_album->getTitle();
+		if ($_zp_current_album->getDesc()) $ret['description'] = $_zp_current_album->getDesc();
+		if (!(boolean) $_zp_current_album->getShow()) $ret['unpublished'] = true;
+		$ret['image_size'] = getOption('image_size');
+		$ret['thumb_size'] = getOption('thumb_size');
+	
+		//format:  2014-11-24 01:40:22
+		$a = strptime($_zp_current_album->getDateTime(), '%Y-%m-%d %H:%M:%S');
+		$ret['date'] = mktime($a['tm_hour'], $a['tm_min'], $a['tm_sec'], $a['tm_mon']+1, $a['tm_mday'], $a['tm_year']+1900);
+	
+		// Add info about this albums' subalbums
+		$albums = array();
+		while (next_album()):
+			$albums[] = toAlbumThumb($_zp_current_album);
+		endwhile;
+		if ($albums) {
+			$ret['albums'] = $albums;
+		}
+	
+		// Add info about this albums' images
+		$images = array();
+		while (next_image()):
+			$images[] = toImage($_zp_current_image);
+		endwhile;
+		if ($images) {
+			$ret['images'] = $images;
+		}
+		
+		// Add info about parent album
+		$parentAlbum = toRelatedAlbum($_zp_current_album->getParent());
+		if ($parentAlbum) {
+			$ret['parent_album'] = $parentAlbum; // would like to use 'parent' but that's a reserved word in javascript
+		}
+		
+		// Add info about next album
+		$nextAlbum = toRelatedAlbum($_zp_current_album->getNextAlbum());
+		if ($nextAlbum) {
+			$ret['next'] = $nextAlbum;
+		}
+		
+		// Add info about prev album
+		$prevAlbum = toRelatedAlbum($_zp_current_album->getPrevAlbum());
+		if ($prevAlbum) {
+			$ret['prev'] = $prevAlbum;
+		}
+	}
+	// Else if no current search, image or album, return info about the root albums of the site
+	// TODO: detect we're not at the root and return a 404 or something
+	else {
+		$ret['image_size'] = getOption('image_size');
+		$ret['thumb_size'] = getOption('thumb_size');
 
 		// Get the top-level albums
 	   	$subAlbumNames = $_zp_gallery->getAlbums();
@@ -69,72 +123,24 @@ function executeRestApi() {
 				$subAlbums[] = toAlbumThumb($subAlbum);
 			}
 			if ($subAlbums) {
-				$album['albums'] = $subAlbums;
+				$ret['albums'] = $subAlbums;
 			}
 		}
 		
+		// Get the latest album
 		include 'image_album_statistics.php';
 		$latestAlbumNames = getAlbumStatistic(1, 'latest-date');
 		if (count($latestAlbumNames) > 0) {
 			$latestAlbum = new Album($latestAlbumNames[0]['folder'], $_zp_gallery);
 			$latest = toAlbumThumb($latestAlbum);
 			if ($latest) {
-				$album['latest'] = $latest;
+				$ret['latest'] = $latest;
 			}
-		}
-	}
-	// Else we're in the context of an album
-	else {
-		$album['path'] = $_zp_current_album->name;
-		$album['title'] = $_zp_current_album->getTitle();
-		if ($_zp_current_album->getDesc()) $album['description'] = $_zp_current_album->getDesc();
-		if (!(boolean) $_zp_current_album->getShow()) $album['unpublished'] = true;
-		$album['image_size'] = getOption('image_size');
-		$album['thumb_size'] = getOption('thumb_size');
-	
-		//format:  2014-11-24 01:40:22
-		$a = strptime($_zp_current_album->getDateTime(), '%Y-%m-%d %H:%M:%S');
-		$album['date'] = mktime($a['tm_hour'], $a['tm_min'], $a['tm_sec'], $a['tm_mon']+1, $a['tm_mday'], $a['tm_year']+1900);
-	
-		// Add info about this albums' subalbums
-		$albums = array();
-		while (next_album()):
-			$albums[] = toAlbumThumb($_zp_current_album);
-		endwhile;
-		if ($albums) {
-			$album['albums'] = $albums;
-		}
-	
-		// Add info about this albums' images
-		$images = array();
-		while (next_image()):
-			$images[] = toImage($_zp_current_image);
-		endwhile;
-		if ($images) {
-			$album['images'] = $images;
-		}
-		
-		// Add info about parent album
-		$parentAlbum = toRelatedAlbum($_zp_current_album->getParent());
-		if ($parentAlbum) {
-			$album['parent_album'] = $parentAlbum; // would like to use 'parent' but that's a reserved word in javascript
-		}
-		
-		// Add info about next album
-		$nextAlbum = toRelatedAlbum($_zp_current_album->getNextAlbum());
-		if ($nextAlbum) {
-			$album['next'] = $nextAlbum;
-		}
-		
-		// Add info about prev album
-		$prevAlbum = toRelatedAlbum($_zp_current_album->getPrevAlbum());
-		if ($prevAlbum) {
-			$album['prev'] = $prevAlbum;
 		}
 	}
 	
 	// Return the results to the client in JSON format
-	print(json_encode($album));
+	print(json_encode($ret));
 	exitZP();
 }
 
