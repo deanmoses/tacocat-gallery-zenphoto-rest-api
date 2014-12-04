@@ -31,15 +31,41 @@ if (!OFFSET_PATH && isset($_GET['api'])) {
 }
 
 function executeRestApi() {
-	global $_zp_gallery, $_zp_current_album, $_zp_current_image, $_zp_albums;
+	global $_zp_gallery, $_zp_current_album, $_zp_current_image, $_zp_albums,$_zp_current_search;
 	header('Content-type: application/json; charset=UTF-8');
 	header('Access-Control-Allow-Origin: *');  // allow anybody on any server to retrieve this
 	$_zp_gallery_page = 'rest_api.php';
-		
+
+	// the associative array data structure we will be returning in JSON format
 	$album = array();
+	
+	// If there's a search, return it instead of albums
+	if ($_zp_current_search) {
+		$album['thumb_size'] = getOption('thumb_size');
 		
+		// add search results that are images
+		$imageResults = array();
+		$images = $_zp_current_search->getImages();
+		foreach ($images as $image) {
+			$imageIndex = $_zp_current_search->getImageIndex($image['folder'], $image['filename']);
+			$imageObject = $_zp_current_search->getImage($imageIndex);
+			$imageResults[] = toImage($imageObject);
+		}
+		if ($imageResults) {
+			$album['images'] = $imageResults;
+		}
+		
+		// add search results that are albums
+		$albumResults = array();
+		while (next_album()) {
+			$albumResults[] = toAlbumThumb($_zp_current_album);
+		}
+		if ($albumResults) {
+			$album['albums'] = $albumResults;
+		}
+	}
 	// If no current album, we're at the root of the site
-	if (!$_zp_current_album) {
+	else if (!$_zp_current_album) {
 		$album['image_size'] = getOption('image_size');
 		$album['thumb_size'] = getOption('thumb_size');
 
@@ -49,7 +75,7 @@ function executeRestApi() {
 			$subAlbums = array();
 			foreach ($subAlbumNames as $subAlbumName) {
 				$subAlbum = new Album($subAlbumName, $_zp_gallery);
-				$subAlbums[] = toChildAlbumApi($subAlbum);
+				$subAlbums[] = toAlbumThumb($subAlbum);
 			}
 			if ($subAlbums) {
 				$album['albums'] = $subAlbums;
@@ -60,7 +86,7 @@ function executeRestApi() {
 		$latestAlbumNames = getAlbumStatistic(1, 'latest-date');
 		if (count($latestAlbumNames) > 0) {
 			$latestAlbum = new Album($latestAlbumNames[0]['folder'], $_zp_gallery);
-			$latest = toChildAlbumApi($latestAlbum);
+			$latest = toAlbumThumb($latestAlbum);
 			if ($latest) {
 				$album['latest'] = $latest;
 			}
@@ -82,7 +108,7 @@ function executeRestApi() {
 		// Add info about this albums' subalbums
 		$albums = array();
 		while (next_album()):
-			$albums[] = toChildAlbumApi($_zp_current_album);
+			$albums[] = toAlbumThumb($_zp_current_album);
 		endwhile;
 		if ($albums) {
 			$album['albums'] = $albums;
@@ -91,7 +117,7 @@ function executeRestApi() {
 		// Add info about this albums' images
 		$images = array();
 		while (next_image()):
-			$images[] = toImageApi($_zp_current_image);
+			$images[] = toImage($_zp_current_image);
 		endwhile;
 		if ($images) {
 			$album['images'] = $images;
@@ -116,7 +142,7 @@ function executeRestApi() {
 		}
 	}
 	
-	// Return the album to the client in JSON format
+	// Return the results to the client in JSON format
 	print(json_encode($album));
 	exitZP();
 }
@@ -133,25 +159,8 @@ function toRelatedAlbum($album) {
 	return;
 }
 
-// just enough info about an image to render it on a standalone page
-function toImageApi($image) {
-	$ret = array();
-	// strip /zenphoto/albums/ so that the path starts something like 2014/...
-	$ret['path'] = str_replace('/zenphoto/albums/', '', $image->getFullImage());
-	$ret['title'] = $image->getTitle();
-	$ret['date'] = toTimestamp($image->getDateTime());
-	$ret['description'] = $image->getDesc();
-	$ret['urlFull'] = $image->getFullImageURL();
-	$ret['urlSized'] = $image->getSizedImage(getOption('image_size'));
-	$ret['urlThumb'] = $image->getThumb();
-	$ret['width'] = $image->getWidth();
-	$ret['height'] = $image->getHeight();
-	
-	return $ret;
-}
-
 // just enough info about a child album to render its thumbnail
-function toChildAlbumApi($album) {
+function toAlbumThumb($album) {
 	$ret = array();
 	$ret['path'] = $album->name;
 	$ret['title'] = $album->getTitle();
@@ -163,6 +172,22 @@ function toChildAlbumApi($album) {
 		$ret['urlThumb'] = $album->getAlbumThumbImage()->getThumb();
 	}
 	
+	return $ret;
+}
+
+// just enough info about an image to render it on a standalone page
+function toImage($image) {
+	$ret = array();
+	// strip /zenphoto/albums/ so that the path starts something like 2014/...
+	$ret['path'] = str_replace('/zenphoto/albums/', '', $image->getFullImage());
+	$ret['title'] = $image->getTitle();
+	$ret['date'] = toTimestamp($image->getDateTime());
+	$ret['description'] = $image->getDesc();
+	$ret['urlFull'] = $image->getFullImageURL();
+	$ret['urlSized'] = $image->getSizedImage(getOption('image_size'));
+	$ret['urlThumb'] = $image->getThumb();
+	$ret['width'] = $image->getWidth();
+	$ret['height'] = $image->getHeight();
 	return $ret;
 }
 
