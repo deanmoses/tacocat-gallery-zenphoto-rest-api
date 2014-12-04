@@ -13,7 +13,7 @@
  * @subpackage api
  */
 $plugin_is_filter = 900 | FEATURE_PLUGIN;
-$plugin_description = gettext('Allows retrieving albums via a REST API');
+$plugin_description = gettext('REST API for Zenphoto');
 $plugin_author = "Dean Moses (deanmoses)";
 
 // Handle API calls before anything else
@@ -27,7 +27,7 @@ function executeRestApi() {
 	header('Access-Control-Allow-Origin: *');  // allow anybody on any server to retrieve this
 	$_zp_gallery_page = 'rest_api.php';
 
-	// the associative array data structure we will be returning in JSON format
+	// the data structure we will be returning in JSON format
 	$album = array();
 	
 	// If there's a search, return it instead of albums
