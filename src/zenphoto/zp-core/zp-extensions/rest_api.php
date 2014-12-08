@@ -10,11 +10,12 @@
  *
  * @author Dean Moses (deanmoses)
  * @package plugins
- * @subpackage api
+ * @subpackage development
  */
 $plugin_is_filter = 900 | FEATURE_PLUGIN;
 $plugin_description = gettext('REST API for Zenphoto');
 $plugin_author = "Dean Moses (deanmoses)";
+$plugin_version = '0.9.0';
 
 // Handle API calls before anything else
 if (!OFFSET_PATH && isset($_GET['api'])) {
