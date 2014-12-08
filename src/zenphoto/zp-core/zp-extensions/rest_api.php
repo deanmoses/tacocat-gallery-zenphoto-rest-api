@@ -22,7 +22,7 @@ if (!OFFSET_PATH && isset($_GET['api'])) {
 }
 
 function executeRestApi() {
-	global $_zp_gallery, $_zp_current_album, $_zp_current_image, $_zp_albums,$_zp_current_search,$_zp_current_context;
+	global $_zp_gallery, $_zp_current_album, $_zp_current_image, $_zp_albums,$_zp_current_search,$_zp_current_context,$_zp_current_admin_obj;
 	header('Content-type: application/json; charset=UTF-8');
 	header('Access-Control-Allow-Origin: *');  // allow anybody on any server to retrieve this
 	$_zp_gallery_page = 'rest_api.php';
@@ -30,9 +30,13 @@ function executeRestApi() {
 	// the data structure we will be returning via JSON
 	$ret = array();
 	
+	// If this is a request to see if the user is an admin, return that info
+	if (isset($_GET['auth'])) {
+		$ret['isAdmin'] = isset($_zp_current_admin_obj) && (bool) $_zp_current_admin_obj;
+	}
 	// If there's a search, return it instead of albums
-	if ($_zp_current_search) {
-		$ret['thumb_size'] = getOption('thumb_size');
+	else if ($_zp_current_search) {
+		$ret['thumb_size'] = (int) getOption('thumb_size');
 		
 		// add search results that are images
 		$imageResults = array();
@@ -65,8 +69,8 @@ function executeRestApi() {
 		$ret['title'] = $_zp_current_album->getTitle();
 		if ($_zp_current_album->getDesc()) $ret['description'] = $_zp_current_album->getDesc();
 		if (!(boolean) $_zp_current_album->getShow()) $ret['unpublished'] = true;
-		$ret['image_size'] = getOption('image_size');
-		$ret['thumb_size'] = getOption('thumb_size');
+		$ret['image_size'] = (int) getOption('image_size');
+		$ret['thumb_size'] = (int) getOption('thumb_size');
 	
 		//format:  2014-11-24 01:40:22
 		$a = strptime($_zp_current_album->getDateTime(), '%Y-%m-%d %H:%M:%S');
@@ -111,8 +115,8 @@ function executeRestApi() {
 	// Else if no current search, image or album, return info about the root albums of the site
 	// TODO: detect we're not at the root and return a 404 or something
 	else {
-		$ret['image_size'] = getOption('image_size');
-		$ret['thumb_size'] = getOption('thumb_size');
+		$ret['image_size'] = (int) getOption('image_size');
+		$ret['thumb_size'] = (int) getOption('thumb_size');
 
 		// Get the top-level albums
 	   	$subAlbumNames = $_zp_gallery->getAlbums();
@@ -183,15 +187,15 @@ function toImage($image) {
 	$ret['urlFull'] = $image->getFullImageURL();
 	$ret['urlSized'] = $image->getSizedImage(getOption('image_size'));
 	$ret['urlThumb'] = $image->getThumb();
-	$ret['width'] = $image->getWidth();
-	$ret['height'] = $image->getHeight();
+	$ret['width'] = (int) $image->getWidth();
+	$ret['height'] = (int) $image->getHeight();
 	return $ret;
 }
 
 // take a zenphoto date string and turn it into an integer timestamp
 function toTimestamp($dateString) {
 	$a = strptime($dateString, '%Y-%m-%d %H:%M:%S'); //format:  2014-11-24 01:40:22
-	return mktime($a['tm_hour'], $a['tm_min'], $a['tm_sec'], $a['tm_mon']+1, $a['tm_mday'], $a['tm_year']+1900);
+	return (int) mktime($a['tm_hour'], $a['tm_min'], $a['tm_sec'], $a['tm_mon']+1, $a['tm_mday'], $a['tm_year']+1900);
 }
 
 ?>
