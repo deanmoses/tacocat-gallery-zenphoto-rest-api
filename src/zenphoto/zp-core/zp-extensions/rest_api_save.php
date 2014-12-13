@@ -8,28 +8,18 @@
  * @subpackage development
  */
 $plugin_is_filter = 5|THEME_PLUGIN;
-//$plugin_is_filter = 900 | FEATURE_PLUGIN;
 $plugin_description = gettext('Allows ajax and other front ends to update images.');
 $plugin_author = "Dean Moses (deanmoses)";
 
 
 // eip_context:  'image' or 'album'
-// eip_field: field to be edited ('desc', 'title', etc...)
 if (zp_loggedin()) {
 	if (!empty($_POST["eip_context"])) {
-		
 		executeRestApiSave($_POST["eip_context"], $_POST["title"], $_POST["desc"]);
 	}
 }
-	
-	// Handle API calls before anything else
-	//if (!OFFSET_PATH && isset($_POST['eip_context'])) {
-	// if (!OFFSET_PATH && isset($_GET['api'])) {
-// 		zp_register_filter('load_theme_script', 'executeRestApiSave', 8888);
-// 	}
 
 function executeRestApiSave($context = '', $title, $desc) {
-//function executeRestApiSave() {
 	header('Access-Control-Allow-Origin: *');  // allow anybody on any server to invoke this
 	header('Content-type: application/json; charset=UTF-8');
 	
