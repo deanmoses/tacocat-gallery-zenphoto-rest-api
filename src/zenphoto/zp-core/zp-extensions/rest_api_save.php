@@ -72,12 +72,11 @@ function executeSetAlbumThumb($context, $thumb_path) {
 			$result = $object->save();
 			if ($result !== false) {
 				$ret['success'] = true;
-				$ret['msg'] = $result;
+				$ret['urlThumb'] = $newThumbImage->getThumb();
 			} 
 			else {
 				$ret['fail'] = true;
 				$ret['message'] = 'Could not save';
-				$ret['err'] = $result;
 			}
 		}
 	}

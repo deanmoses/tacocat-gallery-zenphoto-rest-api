@@ -69,9 +69,7 @@ function executeRestApi() {
 		$ret['path'] = $_zp_current_album->name;
 		$ret['title'] = $_zp_current_album->getTitle();
 		if ($_zp_current_album->getDesc()) $ret['description'] = $_zp_current_album->getDesc();
-		if (!(boolean) $_zp_current_album->getShow()) {
-			$ret['unpublished'] = true;
-		}
+		if (!(boolean) $_zp_current_album->getShow()) $ret['unpublished'] = true;
 		$ret['image_size'] = (int) getOption('image_size');
 		$ret['thumb_size'] = (int) getOption('thumb_size');
 		
