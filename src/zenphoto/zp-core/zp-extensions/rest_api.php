@@ -69,10 +69,17 @@ function executeRestApi() {
 		$ret['path'] = $_zp_current_album->name;
 		$ret['title'] = $_zp_current_album->getTitle();
 		if ($_zp_current_album->getDesc()) $ret['description'] = $_zp_current_album->getDesc();
-		if (!(boolean) $_zp_current_album->getShow()) $ret['unpublished'] = true;
+		if (!(boolean) $_zp_current_album->getShow()) {
+			$ret['unpublished'] = true;
+		}
 		$ret['image_size'] = (int) getOption('image_size');
 		$ret['thumb_size'] = (int) getOption('thumb_size');
-	
+		
+		$thumb_path = $_zp_current_album->get('thumb');
+		if (!is_numeric($thumb_path)) {
+			$ret['thumb'] = $thumb_path;
+		}
+		
 		//format:  2014-11-24 01:40:22
 		$a = strptime($_zp_current_album->getDateTime(), '%Y-%m-%d %H:%M:%S');
 		$ret['date'] = mktime($a['tm_hour'], $a['tm_min'], $a['tm_sec'], $a['tm_mon']+1, $a['tm_mday'], $a['tm_year']+1900);
