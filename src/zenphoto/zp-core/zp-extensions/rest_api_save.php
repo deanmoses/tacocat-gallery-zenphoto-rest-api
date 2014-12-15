@@ -24,8 +24,9 @@ if (zp_loggedin()) {
 		else {
 			$title = (isset($_POST["title"])) ? $_POST["title"] : null;
 			$desc = (isset($_POST["desc"])) ? $_POST["desc"] : null;
+			$summary = (isset($_POST["summary"])) ? $_POST["summary"] : null;
 			$show = (isset($_POST["show"])) ? $_POST["show"] : null;
-			executeRestApiSave($_POST["eip_context"], $title, $desc, $show);
+			executeRestApiSave($_POST["eip_context"], $title, $desc, $summary, $show);
 		}
 	}
 }
@@ -89,7 +90,7 @@ function executeSetAlbumThumb($context, $thumb_path) {
 /**
  * Set the title and description of either an album or an image.
  */
-function executeRestApiSave($context, $title, $desc, $show) {
+function executeRestApiSave($context, $title, $desc, $summary, $show) {
 	$ret = array();
 	
 	if (!in_context(ZP_IMAGE) && !in_context(ZP_ALBUM))
@@ -127,16 +128,15 @@ function executeRestApiSave($context, $title, $desc, $show) {
 	// }
 	if (!empty($title)) $object->set('title', sanitizeField($title, 2));
 	if (!empty($desc)) $object->set('desc', sanitizeField($desc, 1));
+	if (isset($summary)) $object->setCustomData(sanitizeField($summary, 2));
 	if (isset($show)) $object->setShow(($show === 'true') || ($show === '1'));
-	$ret['show'] = $show;
-	$ret['show_isset'] = isset($show);
 	$result = $object->save();
 	if ($result !== false) {
 		$ret['success'] = true;
 	} 
 	else {
 		$ret['fail'] = true;
-		$ret['message'] = 'Could not save';
+		$ret['message'] = 'Could not save - Zenphoto sucks at giving reasons';
 	}
 	// Return the results to the client in JSON format
 	print(json_encode($ret));
