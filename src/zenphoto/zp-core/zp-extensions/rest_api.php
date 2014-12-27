@@ -39,6 +39,9 @@ function executeRestApi() {
 	else if ($_zp_current_search) {
 		$ret['thumb_size'] = (int) getOption('thumb_size');
 		
+		$_zp_current_search->setSortType('date');
+		$_zp_current_search->setSortDirection('DESC');
+		
 		// add search results that are images
 		$imageResults = array();
 		$images = $_zp_current_search->getImages();
