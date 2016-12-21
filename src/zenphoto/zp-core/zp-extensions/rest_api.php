@@ -143,12 +143,12 @@ function executeRestApi() {
 		
 		// Get the latest album
 		include 'image_album_statistics.php';
-		$latestAlbumNames = getAlbumStatistic(1, 'latest-date', '2016');
-		if (count($latestAlbumNames) > 0) {
-			$latestAlbum = new Album($latestAlbumNames[0]['folder'], $_zp_gallery);
-			$latest = toAlbumThumb($latestAlbum);
-			if ($latest) {
-				$ret['latest'] = $latest;
+		$latestAlbumNames = getAlbumStatistic(1, 'latest-date', '2016');		
+		if (count($latestAlbumNames) > 0) {			
+			$latestAlbum = $latestAlbumNames[0];
+			$latestThumb = toAlbumThumb($latestAlbum);
+			if ($latestThumb) {
+				$ret['latest'] = $latestThumb;
 			}
 		}
 	}
