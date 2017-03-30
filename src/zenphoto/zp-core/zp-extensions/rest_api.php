@@ -25,7 +25,39 @@ if (!OFFSET_PATH && isset($_GET['api'])) {
 function executeRestApi() {
 	global $_zp_gallery, $_zp_current_album, $_zp_current_image, $_zp_albums,$_zp_current_search,$_zp_current_context,$_zp_current_admin_obj;
 	header('Content-type: application/json; charset=UTF-8');
-	header('Access-Control-Allow-Origin: *');  // allow anybody on any server to retrieve this
+
+	// If the request is coming from a subdomain, send the CORS headers
+	// that allow cross domain AJAX.  This is important when the web 
+	// front end is being served from sub.domain.com, but its AJAX
+	// requests are hitting this zenphoto installation on domain.com
+
+	// Browsers send the Origin header only when making an AJAX request
+	// to a different domain than the page was served from.  It's the 
+	// protocol://hostname that the web app was served from.  In most 
+	// cases it'll be a subdomain like http://cdn.zenphoto.com
+    if (isset($_SERVER['HTTP_ORIGIN'])) {
+    	// The Host header is the hostname the browser thinks it's 
+    	// sending the AJAX request to. In most casts it'll be the root 
+    	// domain like zenphoto.com
+
+    	// If the Host is a substring within Origin, Origin is most likely a subdomain
+    	// Todo: implement a proper 'endsWith'
+        if (strpos($_SERVER['HTTP_ORIGIN'], $_SERVER['HTTP_HOST']) !== false) {
+        	// Allow CORS requests from the subdomain the ajax request is coming from
+        	header("Access-Control-Allow-Origin: {$_SERVER['HTTP_ORIGIN']}");
+
+        	// Add a Vary header so that CDNs know they need to cache different
+        	// copies of the response when browsers send different Origin headers.  
+        	// This allows us to have clients on foo.zenphoto.com and bar.zenphoto.com, 
+        	// and the CDN will cache different copies of the response for each of them, 
+        	// with the appropriate Access-Control-Allow-Origin header set.
+        	header('Vary: Origin', false /* Allow for multiple Vary headers, other things could be adding a Vary as well. */);
+
+        	// Allow credentials to be sent in CORS requests.  Really only needed on auth requests
+        	header('Access-Control-Allow-Credentials: true');
+        }
+    }
+
 	$_zp_gallery_page = 'rest_api.php';
 
 	// the data structure we will be returning via JSON
@@ -33,6 +65,9 @@ function executeRestApi() {
 	
 	// If this is a request to see if the user is an admin, return that info
 	if (isset($_GET['auth'])) {
+		// Make sure that authentication requests are never cached
+		header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
+
 		$ret['isAdmin'] = isset($_zp_current_admin_obj) && (bool) $_zp_current_admin_obj;
 	}
 	// If there's a search, return it instead of albums
@@ -69,6 +104,12 @@ function executeRestApi() {
 	}
 	// Else if the system is in the context of an album, return info about the album
 	else if ($_zp_current_album) {
+		if (!$_zp_current_album->exists) {
+			http_response_code(404);
+			$ret['message'] = "Album $_zp_current_album->name does not exist.";
+			print(json_encode($ret));
+			exitZP();
+		}
 		$ret['path'] = $_zp_current_album->name;
 		$ret['title'] = $_zp_current_album->getTitle();
 		if ($_zp_current_album->getCustomData()) $ret['summary'] = $_zp_current_album->getCustomData();
