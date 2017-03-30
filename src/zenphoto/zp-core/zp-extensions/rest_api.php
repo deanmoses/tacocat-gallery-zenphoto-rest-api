@@ -46,17 +46,17 @@ function executeRestApi() {
         	// Allow CORS requests from the subdomain the ajax request is coming from
         	header("Access-Control-Allow-Origin: {$_SERVER['HTTP_ORIGIN']}");
 
-        	// Add a Vary header so that CDNs know they need to cache different
-        	// copies of the response when browsers send different Origin headers.  
-        	// This allows us to have clients on foo.zenphoto.com and bar.zenphoto.com, 
-        	// and the CDN will cache different copies of the response for each of them, 
-        	// with the appropriate Access-Control-Allow-Origin header set.
-        	header('Vary: Origin', false /* Allow for multiple Vary headers, other things could be adding a Vary as well. */);
-
         	// Allow credentials to be sent in CORS requests.  Really only needed on auth requests
         	header('Access-Control-Allow-Credentials: true');
         }
     }
+
+    // Add a Vary header so that browsers and CDNs know they need to cache different
+	// copies of the response when browsers send different Origin headers.  
+	// This allows us to have clients on foo.zenphoto.com and bar.zenphoto.com, 
+	// and the CDN will cache different copies of the response for each of them, 
+	// with the appropriate Access-Control-Allow-Origin header set.
+	header('Vary: Origin', false /* Allow for multiple Vary headers, other things could be adding a Vary as well. */);
 
 	$_zp_gallery_page = 'rest_api.php';
 
