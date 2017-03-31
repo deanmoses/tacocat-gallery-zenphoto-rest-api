@@ -8,4 +8,4 @@ A JSON REST API for the ZenPhoto used by tacocat.com website.
 ## You want this other one instead
 **This** REST API plugin works with any Zenphoto installation:
 
-https://github.com/deanmoses/zenphoto-json-rest-api
+**https://github.com/deanmoses/zenphoto-json-rest-api**
