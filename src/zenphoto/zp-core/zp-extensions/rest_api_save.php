@@ -10,14 +10,39 @@
 $plugin_is_filter = 5|THEME_PLUGIN;
 $plugin_description = gettext('Allows ajax and other front ends to update images.');
 $plugin_author = "Dean Moses (deanmoses)";
-
+$plugin_version = '0.9.0';
 
 // eip_context:  'image' or 'album'
 if (zp_loggedin()) {
 	if (!empty($_POST["eip_context"])) {
-		header('Access-Control-Allow-Origin: *');  // allow anybody on any server to invoke this
+
 		header('Content-type: application/json; charset=UTF-8');
-		
+
+		// If the request is coming from a subdomain, send the headers
+		// that allow cross domain AJAX.  This is important when the web 
+		// front end is being served from sub.domain.com, but its AJAX
+		// requests are hitting this zenphoto installation on domain.com
+
+		// Browsers send the Origin header only when making an AJAX request
+		// to a different domain than the page was served from.  Format: 
+		// protocol://hostname that the web app was served from.  In most 
+		// cases it'll be a subdomain like http://cdn.zenphoto.com
+	    if (isset($_SERVER['HTTP_ORIGIN'])) {
+	    	// The Host header is the hostname the browser thinks it's 
+	    	// sending the AJAX request to. In most casts it'll be the root 
+	    	// domain like zenphoto.com
+
+	    	// If the Host is a substring within Origin, Origin is most likely a subdomain
+	    	// Todo: implement a proper 'endsWith'
+	        if (strpos($_SERVER['HTTP_ORIGIN'], $_SERVER['HTTP_HOST']) !== false) {
+	        	// Allow CORS requests from the subdomain the ajax request is coming from
+	        	header("Access-Control-Allow-Origin: {$_SERVER['HTTP_ORIGIN']}");
+
+	        	// Allow credentials to be sent in CORS requests
+	        	header('Access-Control-Allow-Credentials: true');
+	        }
+	    }
+
 		if (!empty($_POST["thumb"])) {
 			executeSetAlbumThumb($_POST["eip_context"], $_POST["thumb"]);
 		}

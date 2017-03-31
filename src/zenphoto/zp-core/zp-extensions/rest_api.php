@@ -26,13 +26,13 @@ function executeRestApi() {
 	global $_zp_gallery, $_zp_current_album, $_zp_current_image, $_zp_albums,$_zp_current_search,$_zp_current_context,$_zp_current_admin_obj;
 	header('Content-type: application/json; charset=UTF-8');
 
-	// If the request is coming from a subdomain, send the CORS headers
+	// If the request is coming from a subdomain, send the headers
 	// that allow cross domain AJAX.  This is important when the web 
 	// front end is being served from sub.domain.com, but its AJAX
 	// requests are hitting this zenphoto installation on domain.com
 
 	// Browsers send the Origin header only when making an AJAX request
-	// to a different domain than the page was served from.  It's the 
+	// to a different domain than the page was served from.  Format:  
 	// protocol://hostname that the web app was served from.  In most 
 	// cases it'll be a subdomain like http://cdn.zenphoto.com
     if (isset($_SERVER['HTTP_ORIGIN'])) {
@@ -46,7 +46,8 @@ function executeRestApi() {
         	// Allow CORS requests from the subdomain the ajax request is coming from
         	header("Access-Control-Allow-Origin: {$_SERVER['HTTP_ORIGIN']}");
 
-        	// Allow credentials to be sent in CORS requests.  Really only needed on auth requests
+        	// Allow credentials to be sent in CORS requests. 
+        	// Really only needed on requests requiring authentication
         	header('Access-Control-Allow-Credentials: true');
         }
     }
@@ -65,7 +66,7 @@ function executeRestApi() {
 	
 	// If this is a request to see if the user is an admin, return that info
 	if (isset($_GET['auth'])) {
-		// Make sure that authentication requests are never cached
+		// Make sure that requests about auth status are never cached
 		header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
 
 		$ret['isAdmin'] = isset($_zp_current_admin_obj) && (bool) $_zp_current_admin_obj;
