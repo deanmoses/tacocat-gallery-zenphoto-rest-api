@@ -1,7 +1,7 @@
 tacocat-gallery-zenphoto-rest-api
 =================================
 
-A JSON REST API for the ZenPhoto specific to what's needed by the tacocat.com website.
+A JSON REST API for the ZenPhoto used by tacocat.com website.
 
 You do not want this.
 
