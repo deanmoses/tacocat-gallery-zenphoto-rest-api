@@ -185,7 +185,7 @@ function executeRestApi() {
 		
 		// Get the latest album
 		include 'image_album_statistics.php';
-		$latestAlbumNames = getAlbumStatistic(1, 'latest-date', '2017');		
+		$latestAlbumNames = getAlbumStatistic(1, 'latest-date', '2018');		
 		if (count($latestAlbumNames) > 0) {			
 			$latestAlbum = $latestAlbumNames[0];
 			$latestThumb = toAlbumThumb($latestAlbum);
