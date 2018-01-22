@@ -49,9 +49,9 @@ if (zp_loggedin()) {
 		else {
 			$title = (isset($_POST["title"])) ? $_POST["title"] : null;
 			$desc = (isset($_POST["desc"])) ? $_POST["desc"] : null;
-			$summary = (isset($_POST["summary"])) ? $_POST["summary"] : null;
-			$show = (isset($_POST["show"])) ? $_POST["show"] : null;
-			executeRestApiSave($_POST["eip_context"], $title, $desc, $summary, $show);
+			$customdata = (isset($_POST["customdata"])) ? $_POST["customdata"] : null;
+			$unpublished = (isset($_POST["unpublished"])) ? $_POST["unpublished"] : null;
+			executeRestApiSave($_POST["eip_context"], $title, $desc, $customdata, $unpublished);
 		}
 	}
 }
@@ -115,7 +115,7 @@ function executeSetAlbumThumb($context, $thumb_path) {
 /**
  * Set the title and description of either an album or an image.
  */
-function executeRestApiSave($context, $title, $desc, $summary, $show) {
+function executeRestApiSave($context, $title, $desc, $customdata, $unpublished) {
 	$ret = array();
 	
 	if (!in_context(ZP_IMAGE) && !in_context(ZP_ALBUM))
@@ -153,8 +153,13 @@ function executeRestApiSave($context, $title, $desc, $summary, $show) {
 	// }
 	if (!empty($title)) $object->set('title', sanitizeField($title, 2));
 	if (!empty($desc)) $object->set('desc', sanitizeField($desc, 1));
-	if (isset($summary)) $object->setCustomData(sanitizeField($summary, 2));
-	if (isset($show)) $object->setShow(($show === 'true') || ($show === '1'));
+	if (isset($customdata)) $object->setCustomData(sanitizeField($customdata, 2));
+
+	if (isset($unpublished)) {
+		$published = !filter_var($unpublished, FILTER_VALIDATE_BOOLEAN);
+		$object->setShow($published);
+	}
+
 	$result = $object->save();
 	if ($result !== false) {
 		$ret['success'] = true;
